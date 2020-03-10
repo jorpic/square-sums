@@ -15,11 +15,29 @@ fn main() {
     let mut result: [i16; N + 1] = [0; N + 1];
     let mut used_numbers = BitVec::from_elem(N+1, false);
     for n in 2..N {
+        let a = result[1..n-1].to_vec();
         let ok = solve(n, &first_square, &mut result, &mut used_numbers);
-        println!("{} {} {} {}", ok, n, result[1], result[n]);
+        let b = result[1..n].to_vec();
+        compare(a, b);
+        // println!("{} {} {} {}", ok, n, result[1], result[n]);
     }
 }
 
+fn compare(a: Vec<i16>, b: Vec<i16>) {
+    print!("{}\t", b.len());
+    for i in 0..a.len() {
+        if a[i] == b[i] {
+            print!("+");
+        } else if b[i] as usize == b.len() {
+            print!("O");
+        } else if a[i] == b[i+1] {
+            print!("-");
+        } else {
+            print!(" ");
+        }
+    }
+    print!("!\n");
+}
 
 fn solve(n: usize, first_square: &[i16], result: &mut [i16], used_numbers: &mut BitVec) -> bool {
     result[1] = 1;
