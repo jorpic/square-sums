@@ -1,5 +1,5 @@
-use lazy_static::lazy_static;
 use bit_vec::BitVec;
+use lazy_static::lazy_static;
 
 const N: usize = 1000;
 
@@ -16,15 +16,28 @@ lazy_static! {
         }
         first_square
     };
+
+    // Allows to quickly check if a number is a perfect square.
+    static ref IS_SQUARE: BitVec = {
+        let mut is_square = BitVec::from_elem(2*N, false);
+        let mut x = 2;
+        loop {
+            if x*x > 2*N-1 {
+                break;
+            }
+            is_square.set(x*x, true);
+            x += 1;
+        }
+        is_square
+    };
 }
 
 fn main() {
-
     let mut result: [i16; N + 1] = [0; N + 1];
-    let mut used_numbers = BitVec::from_elem(N+1, false);
-    for n in 25..N {
+    let mut used_numbers = BitVec::from_elem(N + 1, false);
+    for n in 25..=N {
         solve(n, &mut result, &mut used_numbers);
-        println!("{} {:?}\t", n, &result[1..15]);
+        println!("{} {} {:?}\t", n, check(n, &result), &result[1..15]);
     }
 }
 
@@ -63,4 +76,18 @@ fn solve(n: usize, result: &mut [i16], used_numbers: &mut BitVec) -> bool {
             s += 1;
         }
     }
+}
+
+fn check(n: usize, xs: &[i16]) -> bool {
+    let mut used_numbers = BitVec::from_elem(n + 1, false);
+    used_numbers.set(0, true);
+    for i in 1..n {
+        let s = (xs[i] + xs[i + 1]) as usize;
+        if !IS_SQUARE.get(s).unwrap() {
+            return false;
+        }
+        used_numbers.set(xs[i] as usize, true);
+    }
+    used_numbers.set(xs[n] as usize, true);
+    used_numbers.all()
 }
