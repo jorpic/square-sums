@@ -1,53 +1,42 @@
+use lazy_static::lazy_static;
 use bit_vec::BitVec;
 
 const N: usize = 1000;
 
-fn main() {
-    let mut first_square: [i16; N + 1] = [0; N + 1];
-    let mut s: i16 = 2;
-    for x in 1..N+1 {
-        if s * s - (x as i16) < 1 {
-            s += 1;
+lazy_static! {
+    // FIRST_SQUARE[x] = minimal i such that (i*i - x) > 0.
+    static ref FIRST_SQUARE: [i16; N+1] = {
+        let mut first_square = [0; N+1];
+        let mut s: i16 = 2;
+        for x in 1..N+1 {
+            if s * s - (x as i16) < 1 {
+                s += 1;
+            }
+            first_square[x] = s;
         }
-        first_square[x] = s;
-    }
+        first_square
+    };
+}
+
+fn main() {
 
     let mut result: [i16; N + 1] = [0; N + 1];
     let mut used_numbers = BitVec::from_elem(N+1, false);
-    for n in 2..N {
-        let a = result[1..n-1].to_vec();
-        let ok = solve(n, &first_square, &mut result, &mut used_numbers);
-        let b = result[1..n].to_vec();
-        compare(a, b);
-        // println!("{} {} {} {}", ok, n, result[1], result[n]);
+    for n in 25..N {
+        solve(n, &mut result, &mut used_numbers);
+        println!("{} {:?}\t", n, &result[1..15]);
     }
 }
 
-fn compare(a: Vec<i16>, b: Vec<i16>) {
-    print!("{}\t", b.len());
-    for i in 0..a.len() {
-        if a[i] == b[i] {
-            print!("+");
-        } else if b[i] as usize == b.len() {
-            print!("O");
-        } else if a[i] == b[i+1] {
-            print!("-");
-        } else {
-            print!(" ");
-        }
-    }
-    print!("!\n");
-}
-
-fn solve(n: usize, first_square: &[i16], result: &mut [i16], used_numbers: &mut BitVec) -> bool {
+fn solve(n: usize, result: &mut [i16], used_numbers: &mut BitVec) -> bool {
     result[1] = 1;
     used_numbers.clear();
     used_numbers.set(1, true);
     let mut i = 1;
     let mut x = result[i] as usize;
     let mut p = 0; // x before backtracking
-    'outer: loop {
-        let mut s = first_square[x] as usize;
+    loop {
+        let mut s = FIRST_SQUARE[x] as usize;
         'inner: loop {
             let y = s * s - x;
             if y > n {
