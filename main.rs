@@ -37,7 +37,10 @@ fn main() {
     let mut used_numbers = BitVec::from_elem(N + 1, false);
     for n in 25..=N {
         solve(n, &mut result, &mut used_numbers);
-        println!("{} {} {:?}\t", n, check(n, &result), &result[1..15]);
+        println!("{} {} {:?}\t", n, check(n, &result), &result[1..=n]);
+        let (a, b) = find_place(n+1, &result);
+        let extracted = insert((n+1) as i16, n, &mut result, a, b);
+        println!("{:?} {}", &extracted, check(n+1, &result));
     }
 }
 
@@ -83,11 +86,72 @@ fn check(n: usize, xs: &[i16]) -> bool {
     used_numbers.set(0, true);
     for i in 1..n {
         let s = (xs[i] + xs[i + 1]) as usize;
-        if !IS_SQUARE.get(s).unwrap() {
+        if !is_square(s) {
+            println!("{} {}", xs[i], xs[i+1]);
             return false;
         }
         used_numbers.set(xs[i] as usize, true);
     }
     used_numbers.set(xs[n] as usize, true);
     used_numbers.all()
+}
+
+fn find_place(n: usize, xs: &[i16]) -> (usize, usize) {
+    if is_square(xs[1] as usize + n) {
+        return (0, 1)
+    }
+    if is_square(xs[n-1] as usize + n) {
+        return (n-1, n)
+    }
+
+    let mut start = 0;
+    let mut end = 0;
+    let mut prev = 0;
+
+    for i in 1..n-1 {
+        let a = xs[i] as usize;
+        let b = xs[i+1] as usize;
+        if is_square(a + n) {
+            if is_square(b + n) {
+                return (i, i+1)
+            }
+            else if prev == 0 {
+                start = i;
+            } else if end == 0 {
+                end = i;
+            } else {
+                if end - start > i - prev {
+                    start = prev;
+                    end = i;
+                }
+            }
+            prev = i;
+        }
+    }
+    (start, end)
+}
+
+fn insert(x: i16, n: usize, xs: &mut [i16], a: usize, b: usize) -> Vec<i16> {
+    let res = Vec::from(&xs[a+1..b]);
+    if a+1 == b {
+        let mut tmp1 = x;
+        if n >= b {
+            for i in 0..=(n-b) {
+                let tmp2 = xs[b + i];
+                xs[b + i] = tmp1;
+                tmp1 = tmp2;
+            }
+        }
+        xs[n+1] = tmp1;
+    } else {
+        xs[a+1] = x;
+        for i in 0..=(n-b) {
+            xs[a+i+2] = xs[b+i];
+        }
+    }
+    res
+}
+
+fn is_square(n: usize) -> bool {
+    n < N && IS_SQUARE.get(n).unwrap()
 }
